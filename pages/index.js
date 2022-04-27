@@ -231,10 +231,7 @@ export default function Home() {
             </button>
           )}
         </div>
-        <div>
-
       </div>
-
       <footer className={styles.footer}>
         Made with &#10084; by Frigg.eco 
       </footer>
