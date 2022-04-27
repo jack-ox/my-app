@@ -1,5 +1,6 @@
 import { BigNumber, providers, utils } from "ethers";
 import Head from "next/head";
+import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
 import styles from "../styles/Home.module.css";
@@ -82,15 +83,13 @@ export default function Home() {
       );
     
       await tx.wait();
+        
       tx = await attContract.buyATTWithUSDC(purchaseATTAmount);
       await tx.wait();
       } catch (err) {
         console.error(err);
       };
       setLoading(true);
-      // wait for the transaction to get mined
-      await tx.wait();
-      setLoading(false);
       window.alert("Sucessfully bought ATT tokens");
       await getATTBalance()
   };
@@ -156,7 +155,6 @@ export default function Home() {
         providerOptions: {},
         disableInjectedProvider: false,
       });
-      connectWallet();
     }
   }, [walletConnected]);
 
@@ -234,8 +232,7 @@ export default function Home() {
           )}
         </div>
         <div>
-          <img className={styles.image} src="./0.svg" />
-        </div>
+
       </div>
 
       <footer className={styles.footer}>
@@ -244,4 +241,3 @@ export default function Home() {
     </div>
   );
 }
-  
