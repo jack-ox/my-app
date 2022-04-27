@@ -1,6 +1,5 @@
 import { BigNumber, providers, utils , Contract} from "ethers";
 import Head from "next/head";
-import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
 import styles from "../styles/Home.module.css";
@@ -8,6 +7,7 @@ import { getATTBalance } from "../utils/getATTBalanace";
 import {
   buyATTWithUSDC
 } from "../utils/buyATTWithUSDC";
+import { ATT_CONTRACT_ABI, ATT_CONTRACT_ADDRESS , USDC_CONTRACT_ABI , USDC_CONTRACT_ADDRESS } from "../constants";
 
 export default function Home() {
   /** General state variables */
