@@ -1,4 +1,4 @@
-import { BigNumber, providers, utils } from "ethers";
+import { BigNumber, providers, utils , Contract} from "ethers";
 import Head from "next/head";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
@@ -60,7 +60,7 @@ export default function Home() {
   /**
    * buyATTWithUSDC: buy `amount` number of ATT to a given address with USDC transfer
    */
-   const buyATTWithUSDC = async (amount) => {
+   const buyATTWithUSDC = async (purchaseATTAmount) => {
     try {
       // We need a Signer here since this is a 'write' transaction.
       const signer = await getProviderOrSigner(true);
@@ -79,7 +79,7 @@ export default function Home() {
     
       let tx = await usdcContract.approve(
         USDC_CONTRACT_ADDRESS,
-        purchaseATTAmount.toString()
+        purchaseATTAmount * 1 * 10**6
       );
     
       await tx.wait();
@@ -89,6 +89,7 @@ export default function Home() {
       } catch (err) {
         console.error(err);
       };
+
       setLoading(true);
       window.alert("Sucessfully bought ATT tokens");
       await getATTBalance()
