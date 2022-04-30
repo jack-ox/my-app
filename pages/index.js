@@ -3,11 +3,9 @@ import Head from "next/head";
 import React, { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
 import styles from "../styles/Home.module.css";
-import { getATTBalance } from "../utils/getATTBalanace";
-import {
-  buyATTWithUSDC
-} from "../utils/buyATTWithUSDC";
 import { ATT_CONTRACT_ABI, ATT_CONTRACT_ADDRESS , USDC_CONTRACT_ABI , USDC_CONTRACT_ADDRESS } from "../constants";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
 
 export default function Home() {
   /** General state variables */
@@ -21,11 +19,40 @@ export default function Home() {
   const [attBalance, setATTBalance] = useState(zero);
 
   // amount of the ATT that the user wants to buy
-  const [tokenAmount, setTokenAmount] = useState(zero)
+  const [purchaseATTAmount, setTokenAmount] = useState(zero)
   
   /** Wallet connection */
   // Create a reference to the Web3 Modal (used for connecting to Metamask) which persists as long as the page is open
   const web3ModalRef = useRef();
+  
+  const providerOptions = {
+    walletlink: {
+      package: CoinbaseWalletSDK, // Required
+      options: {
+        appName: "Frigg ATT", // Required
+        infuraId: 9aa3d95b3bc440fa88ea12eaa4456161 // Required unless you provide a JSON RPC url; see `rpc` below
+      }
+    },
+    walletconnect: {
+      package: WalletConnectProvider,
+      options: {
+        infuraId: 9aa3d95b3bc440fa88ea12eaa4456161 // from kewl-club
+      }
+    }
+  };
+
+  const web3Modal = new Web3Modal({
+    network: "mainnet", // optional
+    cacheProvider: true, // optional
+    providerOptions // required
+  });
+  
+  const instance = await web3Modal.connect();
+  
+  const provider = new ethers.providers.Web3Provider(instance);
+  const signer = provider.getSigner();
+
+
   // walletConnected keep track of whether the user's wallet is connected or not
   const [walletConnected, setWalletConnected] = useState(false);
 
@@ -192,8 +219,8 @@ export default function Home() {
 
         <button
           className={styles.button}
-          disabled={!(tokenAmount > 0)}
-          onClick={() => buyATTWithUSDC(tokenAmount)}
+          disabled={!(purchaseATTAmount > 0)}
+          onClick={() => buyATTWithUSDC(purchaseATTAmount)}
         >
           buy ATT tokens with USDC
         </button>

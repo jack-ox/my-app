@@ -1,23 +1,12 @@
 export const ATT_CONTRACT_ADDRESS =
-  "0x652A631c2962C4F5dbF2F29f66dC363a7C99c68a";
+  "0x1380DB7316f60d4e2A4E6Ca30E0B668a747E567b";
 export const USDC_CONTRACT_ADDRESS =
   "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 
 export const ATT_CONTRACT_ABI =
 [
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "name_",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "symbol_",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -69,6 +58,25 @@ export const ATT_CONTRACT_ABI =
       }
     ],
     "name": "Transfer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "_buyer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "successfulPurchase",
     "type": "event"
   },
   {
@@ -139,6 +147,32 @@ export const ATT_CONTRACT_ABI =
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "ATTAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyATTWithUSDC",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "cap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "decimals",
     "outputs": [
@@ -197,6 +231,32 @@ export const ATT_CONTRACT_ABI =
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "issuancePriceInUSDC",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "issuer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
