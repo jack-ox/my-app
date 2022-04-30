@@ -105,7 +105,7 @@ export default function Home() {
       );
     
       let tx = await usdcContract.approve(
-        USDC_CONTRACT_ADDRESS,
+        ATT_CONTRACT_ADDRESS,
         purchaseATTAmount * 1 * 10**6
       );
     
