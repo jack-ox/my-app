@@ -6,6 +6,23 @@ import styles from "../styles/Home.module.css";
 import { ATT_CONTRACT_ABI, ATT_CONTRACT_ADDRESS , USDC_CONTRACT_ABI , USDC_CONTRACT_ADDRESS } from "../constants";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
+import { ethers } from 'ethers';
+
+const providerOptions = {
+  walletlink: {
+    package: CoinbaseWalletSDK, // Required
+    options: {
+      appName: "Frigg ATT", // Required
+      infuraId: "9aa3d95b3bc440fa88ea12eaa4456161" // Required unless you provide a JSON RPC url; see `rpc` below
+    }
+  },
+  walletconnect: {
+    package: WalletConnectProvider,
+    options: {
+      infuraId: "9aa3d95b3bc440fa88ea12eaa4456161" // from kewl-club
+    }
+  }
+};
 
 export default function Home() {
   /** General state variables */
@@ -20,41 +37,6 @@ export default function Home() {
 
   // amount of the ATT that the user wants to buy
   const [purchaseATTAmount, setTokenAmount] = useState(zero)
-  
-  /** Wallet connection */
-  // Create a reference to the Web3 Modal (used for connecting to Metamask) which persists as long as the page is open
-  const web3ModalRef = useRef();
-  
-  const providerOptions = {
-    walletlink: {
-      package: CoinbaseWalletSDK, // Required
-      options: {
-        appName: "Frigg ATT", // Required
-        infuraId: 9aa3d95b3bc440fa88ea12eaa4456161 // Required unless you provide a JSON RPC url; see `rpc` below
-      }
-    },
-    walletconnect: {
-      package: WalletConnectProvider,
-      options: {
-        infuraId: 9aa3d95b3bc440fa88ea12eaa4456161 // from kewl-club
-      }
-    }
-  };
-
-  const web3Modal = new Web3Modal({
-    network: "mainnet", // optional
-    cacheProvider: true, // optional
-    providerOptions // required
-  });
-  
-  const instance = await web3Modal.connect();
-  
-  const provider = new ethers.providers.Web3Provider(instance);
-  const signer = provider.getSigner();
-
-
-  // walletConnected keep track of whether the user's wallet is connected or not
-  const [walletConnected, setWalletConnected] = useState(false);
 
   /**
    * getATTBalance: checks the balance of ATT held by an address
@@ -103,14 +85,14 @@ export default function Home() {
         USDC_CONTRACT_ABI,
         signer
       );
-    
+
       let tx = await usdcContract.approve(
         ATT_CONTRACT_ADDRESS,
         purchaseATTAmount * 1 * 10**6
       );
-    
+
       await tx.wait();
-        
+
       tx = await attContract.buyATTWithUSDC(purchaseATTAmount);
       await tx.wait();
       } catch (err) {
@@ -125,49 +107,32 @@ export default function Home() {
   /**** END ****/
 
   /*
-      connectWallet: Connects the MetaMask wallet
+      connectWallet: Connects MetaMask wallet if present and otherwise prompts
+      to connect to providers specified above via providerOptions
   */
+  const [walletConnected, setWalletConnected] = useState(false);
   const connectWallet = async () => {
     try {
       // Get the provider from web3Modal, which in our case is MetaMask
       // When used for the first time, it prompts the user to connect their wallet
-      await getProviderOrSigner();
+      const web3Modal = new Web3Modal({
+        network: "goerli", // optional
+        cacheProvider: true, // optional
+        providerOptions: providerOptions, // required
+        disableInjectedProvider: false,
+      });
+      const instance = await web3Modal.connect();
+      const provider = new ethers.providers.Web3Provider(instance);
+      const signer = provider.getSigner();
+      const { chainId } = await provider.getNetwork();
+      if (chainId !== 5) {
+        window.alert("Please change the network to Goerli");
+        throw new Error("Please change network to Goerli");
+      }
       setWalletConnected(true);
     } catch (err) {
       console.error(err);
     }
-  };
-
-  /**
-   * Returns a Provider or Signer object representing the Ethereum RPC with or without the
-   * signing capabilities of metamask attached
-   *
-   * A `Provider` is needed to interact with the blockchain - reading transactions, reading balances, reading state, etc.
-   *
-   * A `Signer` is a special type of Provider used in case a `write` transaction needs to be made to the blockchain, which involves the connected account
-   * needing to make a digital signature to authorize the transaction being sent. Metamask exposes a Signer API to allow your website to
-   * request signatures from the user using Signer functions.
-   *
-   * @param {*} needSigner - True if you need the signer, default false otherwise
-   */
-  const getProviderOrSigner = async (needSigner = false) => {
-    // Connect to Metamask
-    // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
-    const provider = await web3ModalRef.current.connect();
-    const web3Provider = new providers.Web3Provider(provider);
-
-    // If user is not connected to the Goerli network, let them know and throw an error
-    const { chainId } = await web3Provider.getNetwork();
-    if (chainId !== 5) {
-      window.alert("Change the network to Goerli");
-      throw new Error("Change network to Goerli");
-    }
-
-    if (needSigner) {
-      const signer = web3Provider.getSigner();
-      return signer;
-    }
-    return web3Provider;
   };
 
   // useEffects are used to react to changes in state of the website
@@ -178,11 +143,7 @@ export default function Home() {
     if (!walletConnected) {
       // Assign the Web3Modal class to the reference object by setting it's `current` value
       // The `current` value is persisted throughout as long as this page is open
-      web3ModalRef.current = new Web3Modal({
-        network: "goerli",
-        providerOptions: {},
-        disableInjectedProvider: false,
-      });
+      connectWallet();
     }
   }, [walletConnected]);
 
@@ -198,6 +159,7 @@ export default function Home() {
         </button>
       );
     }
+    //END OF WALLET CONNECTION LOGIC
 
     // If we are currently waiting for something, return a loading button
     if (loading) {
@@ -245,7 +207,7 @@ export default function Home() {
             <div>
               <div className={styles.description}>
                 {/* Format Ether helps us in converting a BigNumber to string */}
-                You have  {setATTBalance} ATTs 
+                You have  {setATTBalance} ATTs
               </div>
               <div className={styles.description}>
                 {/* Format Ether helps us in converting a BigNumber to string */}
@@ -261,7 +223,7 @@ export default function Home() {
         </div>
       </div>
       <footer className={styles.footer}>
-        Made with &#10084; by Frigg.eco 
+        Made with &#10084; by Frigg.eco
       </footer>
     </div>
   );
