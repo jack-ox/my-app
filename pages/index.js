@@ -1,4 +1,4 @@
-import { BigNumber, providers, utils , Contract} from "ethers";
+import { ethers, BigNumber, providers, utils , Contract} from "ethers";
 import Head from "next/head";
 import React, { useEffect, useRef, useState } from "react";
 import Web3Modal from "web3modal";
@@ -6,7 +6,11 @@ import styles from "../styles/Home.module.css";
 import { ATT_CONTRACT_ABI, ATT_CONTRACT_ADDRESS , USDC_CONTRACT_ABI , USDC_CONTRACT_ADDRESS } from "../constants";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
-import { ethers } from 'ethers';
+
+const toHex = (num) => {
+  const val = Number(num);
+  return "0x" + val.toString(16);
+};
 
 const providerOptions = {
   walletlink: {
@@ -24,6 +28,8 @@ const providerOptions = {
   }
 };
 
+let web3Modal;
+
 export default function Home() {
   /** General state variables */
   // loading is set to true when the transaction is mining and set to false when the transaction has mined
@@ -37,6 +43,34 @@ export default function Home() {
 
   // amount of the ATT that the user wants to buy
   const [purchaseATTAmount, setTokenAmount] = useState(zero)
+
+  useEffect(() => {
+    web3Modal = new Web3Modal({
+      providerOptions,
+      disableInjectedProvider: false,
+      cacheProvider: false
+    });
+  }, []);
+
+  const getProviderOrSigner = async (needSigner = false) => {
+    // Connect to Metamask
+    // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
+    const provider = await web3Modal.connect();
+    const web3Provider = new providers.Web3Provider(provider);
+
+    // If user is not connected to the Goerli network, let them know and throw an error
+    const { chainId } = await web3Provider.getNetwork();
+    if (chainId !== 5) {
+      window.alert("Change the network to Goerli");
+      throw new Error("Change network to Goerli");
+    }
+
+    if (needSigner) {
+      const signer = web3Provider.getSigner();
+      return signer;
+    }
+    return web3Provider;
+  };
 
   /**
    * getATTBalance: checks the balance of ATT held by an address
@@ -94,7 +128,8 @@ export default function Home() {
       await tx.wait();
 
       tx = await attContract.buyATTWithUSDC(purchaseATTAmount);
-      await tx.wait();
+      const final_tx = await tx.wait();
+      console.log(tx, final_tx)
       } catch (err) {
         console.error(err);
       };
@@ -115,19 +150,20 @@ export default function Home() {
     try {
       // Get the provider from web3Modal, which in our case is MetaMask
       // When used for the first time, it prompts the user to connect their wallet
-      const web3Modal = new Web3Modal({
-        network: "goerli", // optional
-        cacheProvider: true, // optional
-        providerOptions: providerOptions, // required
-        disableInjectedProvider: false,
-      });
+      console.log(web3Modal)
       const instance = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(instance);
       const signer = provider.getSigner();
       const { chainId } = await provider.getNetwork();
       if (chainId !== 5) {
-        window.alert("Please change the network to Goerli");
-        throw new Error("Please change network to Goerli");
+        try {
+          await provider.provider.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: toHex(5) }]
+          });
+        } catch (switchError) {
+          console.log(error)
+        }
       }
       setWalletConnected(true);
     } catch (err) {
