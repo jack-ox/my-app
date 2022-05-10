@@ -6,6 +6,8 @@ import styles from "../styles/Home.module.css";
 import { ATT_CONTRACT_ABI, ATT_CONTRACT_ADDRESS , USDC_CONTRACT_ABI , USDC_CONTRACT_ADDRESS } from "../constants";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
+import { SwapWidget } from '@uniswap/widgets'
+import '@uniswap/widgets/fonts.css'
 
 const toHex = (num) => {
   const val = Number(num);
@@ -146,6 +148,8 @@ export default function Home() {
       to connect to providers specified above via providerOptions
   */
   const [walletConnected, setWalletConnected] = useState(false);
+  const [widgetProvider, setWidgetProvider] = useState(undefined);
+  
   const connectWallet = async () => {
     try {
       // Get the provider from web3Modal, which in our case is MetaMask
@@ -153,6 +157,7 @@ export default function Home() {
       console.log(web3Modal)
       const instance = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(instance);
+      setWidgetProvider(provider)
       const signer = provider.getSigner();
       const { chainId } = await provider.getNetwork();
       if (chainId !== 5) {
@@ -202,7 +207,6 @@ export default function Home() {
       return <button className={styles.button}>Loading...</button>;
     }
 
-    // If user doesn't have any tokens to claim, show the mint button
     return (
       <div style={{ display: "flex-col" }}>
         <div>
@@ -239,14 +243,17 @@ export default function Home() {
           <div className={styles.description}>
             You can buy ATT tokens with USDC here
           </div>
+          <div className="Uniswap">
+          <SwapWidget
+            provider={widgetProvider}
+          />
+          </div>
           {walletConnected ? (
             <div>
               <div className={styles.description}>
-                {/* Format Ether helps us in converting a BigNumber to string */}
                 You have  {setATTBalance} ATTs
               </div>
               <div className={styles.description}>
-                {/* Format Ether helps us in converting a BigNumber to string */}
                 Overall 10000 have been minted!!!
               </div>
               {renderButton()}
