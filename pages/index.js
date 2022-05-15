@@ -236,12 +236,10 @@ export default function Home() {
   Query the Graph to pull data from Uniswap
   See doc below
   https://thegraph.com/docs/en/developer/querying-from-your-app/
-  */
   
-  /*
   Uniswap deployed its own subgraph available here:
   https://thegraph.com/hosted-service/subgraph/uniswap/uniswap-v3?selected=playground
-  */
+  
   const APIURL = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
 
   //current pool id is ETH-USDC pool on mainnet
@@ -284,9 +282,7 @@ export default function Home() {
       console.log('Error fetching data: ', err)
     })
   
-  /*
   pass on the variable data to any chart library
-
   */
 
   //Set up Uniswap widget
@@ -328,12 +324,9 @@ export default function Home() {
             provider={widgetProvider}
             tokenList={FRIGG_TOKEN_LIST}
             /*
-            Assume chainID is 1 (on Ethereum mainnet)
-            According to documentation it is possible to provide multiple addresses for each chainID
-            I did not manage to get it working for chainId:5 - Goerli testnet
+            Implemented for Goerli testnet. chainID:5
             https://docs.uniswap.org/sdk/widgets/swap-widget/api#optional-parameters
             */
-            //Implement the following when ATT contract is deployed in mainnet
             defaultInputTokenAddress={{5:USDC_CONTRACT_ADDRESS,}}
             defaultOutputTokenAddress={{5:ATT_CONTRACT_ADDRESS,}}
           />
