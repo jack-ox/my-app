@@ -1,13 +1,15 @@
 import { ethers, BigNumber, providers, utils , Contract} from "ethers";
 import Head from "next/head";
 import React, { useEffect, useRef, useState } from "react";
+import { checkPropTypes } from "prop-types";
 import Web3Modal from "web3modal";
 import styles from "../styles/Home.module.css";
 import { ATT_CONTRACT_ABI, ATT_CONTRACT_ADDRESS , USDC_CONTRACT_ABI , USDC_CONTRACT_ADDRESS } from "../constants";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
-import { SwapWidget } from '@uniswap/widgets'
+import { SupportedChainId, SwapWidget } from '@uniswap/widgets'
 import '@uniswap/widgets/fonts.css'
+import { ApolloClient, InMemoryCache, gql } from '@apollo/client'
 
 const toHex = (num) => {
   const val = Number(num);
@@ -230,6 +232,84 @@ export default function Home() {
     );
   };
 
+  /*
+  Query the Graph to pull data from Uniswap
+  See doc below
+  https://thegraph.com/docs/en/developer/querying-from-your-app/
+  */
+  
+  /*
+  Uniswap deployed its own subgraph available here:
+  https://thegraph.com/hosted-service/subgraph/uniswap/uniswap-v3?selected=playground
+  */
+  const APIURL = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
+
+  //current pool id is ETH-USDC pool on mainnet
+  //Please see Uniswap doc: https://docs.uniswap.org/sdk/subgraph/subgraph-examples#general-pool-query
+  const tokensQuery = `
+  {
+    pool(id: "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8") {
+      token0 {
+        symbol
+        id
+        decimals
+      }
+      token1 {
+        symbol
+        id
+        decimals
+      }
+      poolHourData(orderBy:periodStartUnix,orderDirection:asc){
+        token0Price
+        token1Price
+        liquidity
+        volumeUSD
+      }
+    }
+  }
+  }
+  `
+
+  const client = new ApolloClient({
+    uri: APIURL,
+    cache: new InMemoryCache(),
+  })
+
+  client
+    .query({
+      query: gql(tokensQuery),
+    })
+    .then((data) => console.log('Subgraph data: ', data))
+    .catch((err) => {
+      console.log('Error fetching data: ', err)
+    })
+  
+  /*
+  pass on the variable data to any chart library
+
+  */
+
+  //Set up Uniswap widget
+  const FRIGG_TOKEN_LIST = [
+    {
+      "name": "ATT",
+      "address": ATT_CONTRACT_ADDRESS,
+      "symbol": "ATT",
+      "decimals": 18,
+      "chainId": 5,
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png"
+    },
+    
+    {
+      "name": "USD Coin",
+      "address": USDC_CONTRACT_ADDRESS,
+      "symbol": "USDC",
+      "decimals": 6,
+      "chainId": 5,
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"
+    },
+  ]
+
   return (
     <div>
       <Head>
@@ -246,6 +326,16 @@ export default function Home() {
           <div className="Uniswap">
           <SwapWidget
             provider={widgetProvider}
+            tokenList={FRIGG_TOKEN_LIST}
+            /*
+            Assume chainID is 1 (on Ethereum mainnet)
+            According to documentation it is possible to provide multiple addresses for each chainID
+            I did not manage to get it working for chainId:5 - Goerli testnet
+            https://docs.uniswap.org/sdk/widgets/swap-widget/api#optional-parameters
+            */
+            //Implement the following when ATT contract is deployed in mainnet
+            defaultInputTokenAddress={{5:USDC_CONTRACT_ADDRESS,}}
+            defaultOutputTokenAddress={{5:ATT_CONTRACT_ADDRESS,}}
           />
           </div>
           {walletConnected ? (
